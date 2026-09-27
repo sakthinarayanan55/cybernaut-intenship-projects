@@ -1,0 +1,24 @@
+{
+  "name": "Sentiment-IQ — Product Sentiment Dashboard",
+  "short_name": "Sentiment-IQ",
+  "description": "Analyze product review sentiment and view insights on a dashboard.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#090D16",
+  "theme_color": "#090D16",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/static/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

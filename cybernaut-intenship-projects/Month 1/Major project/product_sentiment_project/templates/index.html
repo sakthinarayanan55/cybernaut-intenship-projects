@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Sentiment-IQ — Product Sentiment & Customer Intelligence Dashboard</title>
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+  <meta name="theme-color" content="#090D16">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
+  
+  <!-- Fonts: Outfit & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=3.0">
+  
+  <!-- Chart.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="app-wrapper">
+    <!-- Header / Navigation -->
+    <header class="topbar">
+      <div class="brand-section">
+        <div class="brand-logo">
+          <div class="logo-icon">
+            <i class="fa-solid fa-wave-square"></i>
+          </div>
+          <div class="brand-text">
+            <span class="brand-title">Sentiment<span class="brand-accent">-IQ</span></span>
+            <span class="brand-tagline"><span class="status-pulse"></span> Intelligence Dashboard</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="search-section">
+        <div class="search-box-wrapper">
+          <i class="fa-solid fa-magnifying-glass search-icon"></i>
+          <input type="text" id="productInput" placeholder="Enter product name (e.g. iPhone 16, Sony WH-1000XM5)..." autocomplete="off" />
+          <div class="source-select-wrapper">
+            <select id="sourceSelect">
+              <option value="flipkart">Flipkart</option>
+              <option value="amazon">Amazon</option>
+            </select>
+            <i class="fa-solid fa-chevron-down select-arrow"></i>
+          </div>
+          <button id="analyzeBtn" class="btn-primary">
+            <i class="fa-solid fa-bolt icon-btn"></i>
+            <span>Analyze Sentiment</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Sub-bar for Preset Chips & Settings -->
+    <div class="subbar">
+      <div class="presets-wrapper">
+        <span class="presets-label"><i class="fa-solid fa-fire"></i> Quick Try:</span>
+        <div class="preset-chips">
+          <button class="chip-preset" data-query="iPhone 16 Pro">iPhone 16 Pro</button>
+          <button class="chip-preset" data-query="Sony WH-1000XM5">Sony WH-1000XM5</button>
+          <button class="chip-preset" data-query="MacBook Air M3">MacBook Air M3</button>
+          <button class="chip-preset" data-query="Boat Airdopes">Boat Airdopes</button>
+          <button class="chip-preset" data-query="Nike Air Max">Nike Air Max</button>
+        </div>
+      </div>
+
+      <div class="subbar-actions">
+        <label class="mock-switch" title="Mock mode generates sample data quickly without browser dependencies">
+          <input type="checkbox" id="mockToggle" checked>
+          <span class="switch-slider"></span>
+          <span class="switch-label">Sample Data Mode</span>
+        </label>
+        <span id="status" class="status-msg"></span>
+      </div>
+    </div>
+
+    <!-- Main Workspace -->
+    <main class="main-content">
+      <!-- Tracked Products Sidebar / Drawer -->
+      <section class="tracked-panel">
+        <div class="panel-header">
+          <h3><i class="fa-solid fa-layer-group"></i> Tracked Products</h3>
+          <span id="productCountBadge" class="badge-count">0</span>
+        </div>
+        <div id="productList" class="product-grid">
+          <div class="empty-tracked">
+            <i class="fa-solid fa-box-open"></i>
+            <p>No products tracked yet. Search a product above to analyze customer sentiment!</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Main Analytics Dashboard -->
+      <section id="dashboard" class="dashboard-container hidden">
+        <!-- Product Hero Card -->
+        <div class="product-hero-card">
+          <div class="hero-main-info">
+            <div class="hero-badge-row">
+              <span id="productSourceTag" class="source-tag"><i class="fa-solid fa-store"></i> Flipkart</span>
+              <span id="productHealthTag" class="health-tag positive"><i class="fa-solid fa-shield-halved"></i> High Satisfaction</span>
+            </div>
+            <h1 id="productTitle">Product Name</h1>
+            <p id="productMeta" class="product-meta-text"><i class="fa-solid fa-comments"></i> 0 reviews analyzed • Updated live</p>
+          </div>
+          <div class="hero-actions">
+            <button id="exportCsvBtn" class="btn-secondary" title="Export sentiment dataset to CSV file">
+              <i class="fa-solid fa-file-arrow-down"></i> Export CSV
+            </button>
+            <button id="deleteProductBtn" class="btn-danger" title="Delete product and review history">
+              <i class="fa-solid fa-trash-can"></i> Delete
+            </button>
+          </div>
+        </div>
+
+        <!-- Metric KPI Grid -->
+        <div class="kpi-grid">
+          <div class="kpi-card score-card">
+            <div class="kpi-icon"><i class="fa-solid fa-gauge-high"></i></div>
+            <div class="kpi-content">
+              <span class="kpi-label">Sentiment Index</span>
+              <div class="kpi-val-row">
+                <span id="avgScore" class="kpi-value">0.00</span>
+                <span class="kpi-sub-scale">/ +1.0</span>
+              </div>
+              <span id="scoreInterpretation" class="kpi-status-text">Neutral</span>
+            </div>
+          </div>
+
+          <div class="kpi-card positive-card">
+            <div class="kpi-icon"><i class="fa-solid fa-face-smile"></i></div>
+            <div class="kpi-content">
+              <span class="kpi-label">Positive Feedback</span>
+              <div class="kpi-val-row">
+                <span id="positivePct" class="kpi-value pos-color">0%</span>
+                <span id="positiveCount" class="kpi-count">(0)</span>
+              </div>
+              <div class="progress-bar-bg"><div id="positiveBar" class="progress-bar-fill pos-fill" style="width: 0%"></div></div>
+            </div>
+          </div>
+
+          <div class="kpi-card neutral-card">
+            <div class="kpi-icon"><i class="fa-solid fa-face-meh"></i></div>
+            <div class="kpi-content">
+              <span class="kpi-label">Neutral / Mixed</span>
+              <div class="kpi-val-row">
+                <span id="neutralPct" class="kpi-value neu-color">0%</span>
+                <span id="neutralCount" class="kpi-count">(0)</span>
+              </div>
+              <div class="progress-bar-bg"><div id="neutralBar" class="progress-bar-fill neu-fill" style="width: 0%"></div></div>
+            </div>
+          </div>
+
+          <div class="kpi-card negative-card">
+            <div class="kpi-icon"><i class="fa-solid fa-face-frown"></i></div>
+            <div class="kpi-content">
+              <span class="kpi-label">Negative Feedback</span>
+              <div class="kpi-val-row">
+                <span id="negativePct" class="kpi-value neg-color">0%</span>
+                <span id="negativeCount" class="kpi-count">(0)</span>
+              </div>
+              <div class="progress-bar-bg"><div id="negativeBar" class="progress-bar-fill neg-fill" style="width: 0%"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="charts-grid">
+          <div class="chart-card">
+            <div class="chart-header">
+              <h3><i class="fa-solid fa-chart-pie"></i> Sentiment Distribution</h3>
+              <span class="chart-sub">Share of buyer sentiment</span>
+            </div>
+            <div class="chart-body doughnut-wrapper">
+              <canvas id="pieChart"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-card wide-chart">
+            <div class="chart-header">
+              <h3><i class="fa-solid fa-chart-line"></i> Sentiment Timeline Trend</h3>
+              <span class="chart-sub">Monthly sentiment volume movement</span>
+            </div>
+            <div class="chart-body">
+              <canvas id="lineChart"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-header">
+              <h3><i class="fa-solid fa-quote-left"></i> Key Keywords & Frequency</h3>
+              <span class="chart-sub">Most frequent review topics</span>
+            </div>
+            <div class="chart-body">
+              <canvas id="barChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reviews Feed & Intelligence Hub -->
+        <div class="reviews-container">
+          <div class="reviews-header">
+            <div class="reviews-title">
+              <h3><i class="fa-solid fa-list-check"></i> Customer Reviews Feed</h3>
+              <span id="reviewsCountBadge" class="badge-count">0 reviews</span>
+            </div>
+            
+            <div class="reviews-toolbar">
+              <!-- Filter Tabs -->
+              <div class="sentiment-filter-tabs">
+                <button class="filter-tab active" data-filter="all">All</button>
+                <button class="filter-tab positive" data-filter="positive">Positive</button>
+                <button class="filter-tab neutral" data-filter="neutral">Neutral</button>
+                <button class="filter-tab negative" data-filter="negative">Negative</button>
+              </div>
+
+              <!-- Search in reviews -->
+              <div class="review-search-box">
+                <i class="fa-solid fa-filter search-sm-icon"></i>
+                <input type="text" id="reviewSearchInput" placeholder="Filter reviews by text..." />
+              </div>
+            </div>
+          </div>
+
+          <div id="reviewsList" class="reviews-feed-list">
+            <!-- Review items rendered dynamically -->
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="toast-container"></div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/dashboard.js') }}?v=3.0"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        for (let registration of registrations) {
+          registration.update();
+        }
+      });
+      navigator.serviceWorker.register('/service-worker.js?v=3.0').catch(() => {});
+    }
+  </script>
+</body>
+</html>
